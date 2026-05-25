@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>memoigm</title>
+
+<style>
+
+.cover{
+      position:absolute;
+      font-size:30px;
+}
+
+.card{
+     position:relative;
+}
+
+body{
+    margin:0;
+    font-family:Arial,sans-serif;
+    background:linear-gradient(135deg,#cfe9ff,#d9cfff,#fff4b8);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    min-height:100vh;
+    overflow-x:hidden;
+}
+
+h1{
+    color:#6f5cff;
+    text-align:center;
+    margin-top:20px;
+}
+
+#startScreen{
+    text-align:center;
+    margin-top:100px;
+}
+
+button{
+    padding:12px 24px;
+    border:none;
+    border-radius:15px;
+    background:#7b8cff;
+    color:white;
+    font-size:18px;
+    cursor:pointer;
+}
+
+#gameBoard{
+    display:grid;
+    grid-template-columns:repeat(4,80px);
+    gap:10px;
+    margin-top:20px;
+    justify-content:center;
+}
+
+.card{
+    width:80px;
+    height:80px;
+    background:#f8f7ff;
+    border-radius:15px;
+    overflow:hidden;
+    cursor:pointer;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-size:30px;
+    box-shadow:0 4px 10px rgba(0,0,0,0.1);
+}
+
+.card img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
+.hidden img{
+    display:none;
+}
+
+.hidden .cover{
+        display:block;
+}
+
+.card:not(.hidden) .cover{
+       display:none;
+}
+
+#winScreen{
+    display:none;
+    text-align:center;
+    margin-top:50px;
+}
+
+#funnyText{
+    font-size:32px;
+    color:#ff1493;
+    animation:pop 1s infinite alternate;
+}
+
+@keyframes pop{
+    from{transform:scale(1);}
+    to{transform:scale(1.08);}
+}
+
+.emoji{
+    position:absolute;
+    bottom:-20px;
+    animation:floatUp linear forwards;
+    opacity:0.9;
+}
+
+@keyframes floatUp{
+    from{
+        transform:translateY(0) rotate(0deg);
+        opacity:1;
+    }
+
+    to{
+        transform:translateY(-120vh) rotate(720deg);
+        opacity:0;
+    }
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="startScreen">
+    <h1>Match these memories or else become 🐒 </h1>
+    <button onclick="startGame()">Start playinggg</button>
+</div>
+
+<div id="gameBoard"></div>
+
+<div id="winScreen">
+    <h1 id="funnyText">
+      LOL,CONGRATS
+        YOU WON...UNFORTUNATELY 👺
+HBD🎂
+    </h1>
+</div>
+
+<script>
+
+const bgMusic = new Audio("bg.mp3");
+const matchSound = new Audio("match.mp3");
+const winSound = new Audio("win.mp3");
+
+bgMusic.loop = true;
+
+const images = [
+    "img1.jpg",
+    "img2.jpg",
+    "img3.jpg",
+    "img4.jpg",
+    "img5.jpg",
+    "img6.jpg",
+    "img7.jpg",
+    "img8.jpg",
+    "img9.jpg",
+    "img10.jpg",
+    "img11.jpg"
+];
+
+let cards = [...images, ...images];
+
+cards.sort(() => Math.random() - 0.5);
+
+const board = document.getElementById("gameBoard");
+
+let firstCard = null;
+let secondCard = null;
+let lockBoard = false;
+let matchedPairs = 0;
+
+function startGame(){
+
+    bgMusic.play();
+
+    document.getElementById("startScreen").style.display="none";
+
+    createBoard();
+}
+
+function createBoard(){
+
+    cards.forEach(image => {
+
+        const card = document.createElement("div");
+
+        card.classList.add("card","hidden");
+
+        card.dataset.image = image;
+
+        card.innerHTML = `
+            <img src="${image}">
+            <span class="cover">💚</span>
+        `;
+
+        card.addEventListener("click", flipCard);
+
+        board.appendChild(card);
+    });
+}
+
+function flipCard(){
+
+    if(lockBoard) return;
+
+    if(this === firstCard) return;
+
+    this.classList.remove("hidden");
+
+    if(!firstCard){
+
+        firstCard = this;
+        return;
+    }
+
+    secondCard = this;
+
+    checkMatch();
+}
+
+function checkMatch(){
+
+    let isMatch =
+        firstCard.dataset.image ===
+        secondCard.dataset.image;
+
+    if(isMatch){
+
+        matchSound.currentTime = 0;
+        matchSound.play();
+
+        matchedPairs++;
+
+        firstCard.removeEventListener("click", flipCard);
+        secondCard.removeEventListener("click", flipCard);
+
+        resetBoard();
+
+        if(matchedPairs === images.length){
+
+            setTimeout(() => {
+
+                board.style.display="none";
+
+                document.getElementById("winScreen")
+                .style.display="block";
+
+                launchEmojis();
+
+            },500);
+        }
+
+    }else{
+
+                lockBoard = true;
+
+        setTimeout(() => {
+
+            firstCard.classList.add("hidden");
+            secondCard.classList.add("hidden");
+
+            resetBoard();
+
+        },800);
+    }
+}
+
+function resetBoard(){
+
+    [firstCard, secondCard] = [null, null];
+
+    lockBoard = false;
+}
+
+function launchEmojis(){
+
+   bgMusic.pause();
+
+   winSound.currentTime = 0;
+   winSound.play();
+
+    const emojis = [
+        "☘️","🌷","✨","🥸",
+        "🐒","💩","👺","💚","🤍"
+    ];
+
+    for(let i=0;i<120;i++){
+
+        const emoji = document.createElement("div");
+
+        emoji.classList.add("emoji");
+
+        emoji.innerHTML =
+            emojis[Math.floor(Math.random()*emojis.length)];
+
+        emoji.style.left =
+            Math.random()*100 + "vw";
+
+        emoji.style.fontSize =
+            (Math.random()*25+20)+"px";
+
+        emoji.style.animationDuration =
+            (Math.random()*4+3)+"s";
+
+        document.body.appendChild(emoji);
+
+        setTimeout(() => {
+            emoji.remove();
+        },7000);
+    }
+}
+
+</script>
+
+</body>
+</html>
